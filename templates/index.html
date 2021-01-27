@@ -1,0 +1,15 @@
+{% extends '_base.html' %}
+
+{% block content %}
+    <center>        
+        {% if current_user.is_authenticated %}
+            <h1>You are logged in as {{current_user.username}}</h1>
+            <br><br>
+            <a href="{{url_for('logout')}}" class="btn btn-danger">Logout</a>
+        {% else %}
+            <a href="{{url_for('login')}}"  class="btn btn-secondary">
+      <i class="fa fa-github fa-fw"></i>
+      <span>Login with GitHub</span></a>
+        {% endif %}
+    </center>
+{% endblock content %}
