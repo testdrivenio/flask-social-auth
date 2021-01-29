@@ -9,7 +9,7 @@ Like every other system, social authentication has its pros and cons.
 #### Pros
 
 - No need to spin up your own authentication workflow
-- Third-party auth providers like Google, Facebook, etc. have a high priority for their application security. Using these services can significantly improve the security of our application.
+- Third-party auth providers like Google, Facebook, etc., have a high priority for their application security. Using these services can significantly improve the security of our application.
 - You can automatically retrieve the username, email, and other data from the authentication provider. This improves the signup experience by eliminating one step(manually asking them).
 
 #### Cons
@@ -37,7 +37,7 @@ First, we need to get GitHub OAuth tokens by creating a new OAuth application. N
 
 ![GitHub ID and Secret](images/github_tokens.PNG)
 
-Copy the generated tokens and save it to a `.env` file
+Copy the generated tokens and save them to a `.env` file
 
 ```env
 GITHUB_ID=<YOUR_ID_HERE>
@@ -46,9 +46,9 @@ GITHUB_SECRET=<YOUR_SECRET_HERE>
 OAUTHLIB_INSECURE_TRANSPORT=1
 ```
 
-`OAUTHLIB_INSECURE_TRANSPORT=1` is required as oauthlib works only over https. This helps us test the app locally.
+`OAUTHLIB_INSECURE_TRANSPORT=1` is required as oauthlib works only over HTTPS. This helps us test the app locally.
 
-Install the required dependancies
+Install the required dependencies
 
 ```bash
 pip install flask Flask==1.1.2 Flask-Dance==3.2.0 python-dotenv==0.15.0
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     app.run(debug=True)
 ```
 
-The route `/` redirects to `github authentication` page(if not logged in). Once logged in, it display the username.
+The route `/` redirects to the `github authentication` page(if not logged in). Once logged in, it displays the username.
 
 Start the application by running `python main.py`, navigate to http://127.0.0.1:5000 and test the app.
 
@@ -109,7 +109,7 @@ Now let's see how we can integrate `Flask-login` to create a session. Install Fl
 pip install Flask-Login==0.5.0 Flask-SQLAlchemy==2.4.4
 ```
 
-Start by creating the models to store user and oauth information,
+Start by creating the models to store user and OAuth information,
 
 ```python
 # main.py
@@ -144,7 +144,7 @@ This will create two tables, `user` and `flask_dance_oauth`. The tables look lik
 ```bash
 # user table
 
-type          notnull 
+name          type 
 --------  ------------
 id        INTEGER     
 username  VARCHAR(250)
@@ -160,7 +160,7 @@ token       TEXT
 user_id     INTEGER    
 ```
 
-`OAuthConsumerMixin` will automatically add the necessary fields to store oauth information. Once the tables are created, we setup Flask-dance to use our new table as backend. Add the following to `main.py`,
+`OAuthConsumerMixin` will automatically add the necessary fields to store OAuth information. Once the tables are created, we setup Flask-dance to use our new table as storage. Add the following to `main.py`,
 
 ```python
 # main.py
@@ -175,7 +175,7 @@ github_blueprint.storage = SQLAlchemyStorage(
 )
 ```
 
-Once the backend is setup, setup Flask-login
+Once the backend is set up, setup Flask-login.
 
 ```python
 # main.py
@@ -220,9 +220,9 @@ def logout():
     return redirect(url_for("homepage"))
 ```
 
-Here the `homepage` view will render the `index.html` template. We'll get to the template soon. Next we have a `/github` route that authenticates wth github and returns the username. The `logout` route simply logs out the user.
+Here the `homepage` view will render the `index.html` template. We'll get to the template soon. Next, we have a `/github` route that authenticates with github and returns the username. The `logout` route logs out the user.
 
-All the routes are now setup. But we haven't logged in the user yet. For that, we use something called [Flask Signals](https://flask.palletsprojects.com/en/1.1.x/signals/). Signals allow you to perform certain actions when some event occurs. In our case, we'll login the user when the github authentication is successful.
+All the routes are now setup. But we haven't logged in the user yet. For that, we use something called [Flask Signals](https://flask.palletsprojects.com/en/1.1.x/signals/). Signals allow you to perform certain actions when some event occurs. In our case, we'll log in the user when the github authentication is successful.
 
 ```python
 # main.py
@@ -250,12 +250,12 @@ def github_logged_in(blueprint, token):
 > blinker library is required for signals to work.
 > pip install blinker==1.4
 
-When the user connects via the `github_blueprint`, the `github_logged_in` function gets executed. It takes in two parameters. The blueprint and the token(from github). We grab the username from the provider and perform one of two actions
+When the user connects via the `github_blueprint`, the `github_logged_in` function gets executed. It takes in two parameters: the blueprint and the token(from github). We grab the username from the provider and perform one of two actions.
 
-1. If the username is already present in the tables, we login the user
+1. If the username is already present in the tables, we log in the user
 2. If not, we create a new user
 
-Finally we add the templates to finish our GitHub login.
+Finally, we add the templates to finish our GitHub login.
 
 ```bash
 mkdir templates && cd templates
