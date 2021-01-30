@@ -4,7 +4,7 @@ from flask_login import logout_user, login_required
 
 from app.config import providers
 from app.models import db, login_manager
-from app.oauth import github_blueprint, twitter_blueprint, provider_logged_in
+from app.oauth import github_blueprint, twitter_blueprint
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
