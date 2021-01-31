@@ -21,11 +21,9 @@ Like every other system, social authentication has its pros and cons.
 ### How does Social authentication work? (todo)
 ### Roll your own social auth with flask and oauthlib (todo)
 
-### Flask-dance
+### GitHub example with Flask-dance
 
 [Flask-dance](https://flask-dance.readthedocs.io/en/latest/) is a library built on top of oauthlib for Flask. It has a simple API that lets you build social login for your application. 
-
-Let's see how we can build GitHub and Twitter login for our Flask application.
 
 First, we need to get GitHub OAuth tokens by creating a new OAuth application. Navigate to [https://github.com/settings/applications/new](https://github.com/settings/applications/new) to create a new [OAuth application](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps)
 
@@ -80,7 +78,7 @@ from app.oauth import github_blueprint
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
-app.register_blueprint(github_blueprint, url_prefix="/github_login")
+app.register_blueprint(github_blueprint, url_prefix="/login")
 
 
 @app.route("/")
@@ -100,12 +98,92 @@ The route `/` redirects to the `github authentication` page(if not logged in). O
 
 Start the application by running `python main.py`, navigate to http://127.0.0.1:5000 and test the app.
 
-### Demo
+#### Demo
 
-![Demo 1](images/demo1.gif)
+![Demo 1](images/github-flask-dance.gif)
 
-We will be building an application with Github and Twitter login. Flask-login will handle the login functionality, and Flask-Sqlalchemy will handle the database.
 
+### Twitter login with Flask-dance
+
+The Twitter login is similar to github login. We do the following tasks,
+
+- Obtain Twitter OAuth tokens by creating a new OAuth application
+- Create a Twitter blueprint
+- Set up a route to redirect to Twitter login
+
+Create a new Twitter OAuth application [here](https://developer.twitter.com/en/portal/apps/new). After creating a new app, go to the app settings and `edit` the authentication settings.
+
+![twitter settings](images/twitter_settigs.PNG)
+
+Turn on the `3-legged OAuth` and set the following.
+
+> Callback URL: http://127.0.0.1:5000/login/twitter/authorized
+> Website URL: http://localhost.com (or any valid URL)
+
+![twitter callback](images/twitter_callback.PNG)
+
+Navigate to the `keys and tokens` tab on top and Create a new API key and secret. Add the tokens to our `.env` file.
+
+![twitter tokens](images/twitter_tokens.PNG)
+
+```env
+TWITTER_API_KEY=<your-twitter-api-key>
+TWITTER_API_SECRET=<your-twitter-api-secret>
+```
+
+Now create a Twitter blueprint in `oauth.py`,
+
+```python
+from flask_dance.contrib.twitter import make_twitter_blueprint
+
+twitter_blueprint = make_twitter_blueprint(
+    api_key=os.getenv("TWITTER_API_KEY"),
+    api_secret=os.getenv("TWITTER_API_SECRET"),
+)
+```
+
+Remember, currently we are creating a Twitter app independent of the github application. We'll see how to add both Twitter and github login and use flask-login to manage users in later sections.
+
+Now we set up the route to authenticate via twitter,
+
+```python
+# main.py
+
+from flask import Flask, redirect, url_for
+from flask_dance.contrib.twitter import twitter
+
+from app.oauth import twitter_blueprint
+
+app = Flask(__name__)
+app.secret_key = "supersecretkey"
+app.register_blueprint(twitter_blueprint, url_prefix="/login")
+
+
+@app.route("/")
+def login():
+    if not twitter.authorized:
+        return redirect(url_for("twitter.login"))
+    res = twitter.get("account/settings.json")
+
+    return f"You are @{res.json()['screen_name']} on Twitter"
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+This works the same as the github authentication. It checks if the user has already authenticated; if not, redirect to the `Twitter authentication page`. The only differences between github and Twitter authentication are the endpoint to fetch user=data and the key to get the username from the fetched data
+
+| | GitHub | Twitter |
+|- |- |- |
+| Endpoint to fetch user data | /user | account/settings.json |
+| key for username | login | screen_name |
+
+We have now completed authentication with GitHub and Twitter. Now let's create an application that can manage user sessions by `logging in` and `logging-out` the user.  
+
+We will use Flask-login to manage user sessions and Flask-Sqlalchemy to store user as well as OAuth data.
+
+### Setting up Flask-Login
 #### Project Structure
 
 ```bash
@@ -352,42 +430,14 @@ Now add a `login with GitHub` button to `index.html`
 
 Once done, start the app and try it out at `http://127.0.0.1:5000`.
 
-### Demo
+#### Demo
 
-![demo 2](images/demo2.gif)
+![demo 2](images/github-login.gif)
 
 
 ### Setting up Twitter Login
 
-Setting up a Twitter login is similar to the github one. We perform the following tasks.
-
-1. Get tokens from the Twitter developer account by creating a new OAuth application.
-1. Define the Twitter blueprint
-1. Add a new route for Twitter login
-1. Create Flask signal to authenticate the user
-1. Add the `Login with Twitter` button to `index.html`
-
-Create a new Twitter OAuth application [here](https://developer.twitter.com/en/portal/apps/new). After creating a new app, go to the app settings and `edit` the authentication settings.
-
-![twitter settings](images/twitter_settigs.PNG)
-
-Turn on the `3-legged OAuth` and set the following.
-
-> Callback URL: http://127.0.0.1:5000/login/twitter/authorized
-> Website URL: http://localhost.com (or any valid URL)
-
-![twitter callback](images/twitter_callback.PNG)
-
-Navigate to the `keys and tokens` tab on top and Create a new API key and secret. Add the tokens to our `.env` file.
-
-![twitter tokens](images/twitter_tokens.PNG)
-
-```env
-TWITTER_API_KEY=<your-twitter-api-key>
-TWITTER_API_SECRET=<your-twitter-api-secret>
-```
-
-Once done, add the following to the `app.oauth.py` file.
+Create a Twitter blueprint and setup flask sqlalchemy as storage. Add the following to the `app.oauth.py` file.
 
 ```python
 # app/oauth.py
@@ -511,12 +561,12 @@ Start the application and test it at https://127.0.0.1:5000
 
 > If you face any troubles, delete the `users.db` and restart the app.
 
-### Demo
+#### Demo
 
-![demo 3](images/demo3.gif)
+![demo 3](images/final-app.gif)
 
 ## Conclusion
 
 In this tutorial, we have seen how to implement Social login for your flask application using Flask-dance. Once we set up GitHub login, the Twitter login was easy and was done in 5 steps (thanks to the simple flask-dance API). 
 
-If you are looking for more challenges, figure out how to link multiple social media logins to a single account or get more data (email, language, country), etc., by specifying OAuth scopes. 
+If you are looking for more challenges, figure out how to link multiple social media logins to a single account, get more data (email, language, country), etc., by specifying OAuth scopes. 
