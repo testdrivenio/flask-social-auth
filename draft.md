@@ -18,8 +18,74 @@ Like every other system, social authentication has its pros and cons.
 - People tend to ignore the permissions requested by an authentication provider. Some applications might even access data that is more than required.
 - Social login cannot be the sole authentication method, as the users with no social account might need to create one to log in. The best approach is to provide both(social + your own) and let the user choose.
 
-### How does Social authentication work? (todo)
-### Roll your own social auth with flask and oauthlib (todo)
+### How does OAuth work?
+
+![flow](images/flow.png)
+
+- The user logs into the provider account.
+- The provider verifies the credentials, and send back and authorization code.
+- The user requests for an access token using the code
+- The provider verifies the code and provides a new access token
+- The user requests data using the access token
+- The provider verifies the access token and sends back requested data
+
+
+Let's see github authentication using simple python requests,
+
+```python
+# import necessary modules. `os` to read env variable, `requests` 
+# to make GET/POST requests, and `parse_qs` to parse the response
+# it stands for parse_querystring.
+
+import os
+import requests
+from urllib.parse import parse_qs
+
+
+# define all the endpoints. Here we have the GITHUB_ID, GITHUB_SECRET 
+# set in environment variables
+
+AUTHORIZATION_ENDPOINT = f"https://github.com/login/oauth/authorize?response_type=code&client_id={os.getenv('GITHUB_ID')}"
+TOKEN_ENDPOINT = "https://github.com/login/oauth/access_token"
+USER_ENDPOINT = "https://api.github.com/user"
+
+# First we login via browser, using the URL on terminal.
+# Once logged in, the page redirects. Here we to provide 
+# the `code` in the redirect URL. Copy and paste the code
+# in the terminal 
+
+print(f"Authorization URL: {AUTHORIZATION_ENDPOINT}")
+code = input("Enter the code: ")
+
+# Once we get the code, we sent the code to the access token
+# endpoint(along with id and secret). The response contains 
+# the access_token and we parse is using parse_qs 
+
+res = requests.post(
+    TOKEN_ENDPOINT,
+    data=dict(
+        client_id=os.getenv("GITHUB_ID"),
+        client_secret=os.getenv("GITHUB_SECRET"),
+        code=code,
+    ),
+)
+res = parse_qs(res.content.decode("utf-8"))
+token = res["access_token"][0]
+
+# Now that we have access_token, we send it back to 
+# the user data endpoint and display the username from 
+# response
+
+user_data = requests.get(USER_ENDPOINT, headers=dict(Authorization=f"token {token}"))
+username = user_data.json()["login"]
+print(f"You are {username} on GitHub")
+```
+
+Test it yourself by running `python oauth.py`
+
+#### Demo
+
+![demo](images/terminal.gif)
 
 ### GitHub example with Flask-dance
 
