@@ -7,9 +7,15 @@
             <br><br>
             <a href="{{url_for('logout')}}" class="btn btn-danger">Logout</a>
         {% else %}
-            <a href="{{url_for('login')}}"  class="btn btn-secondary">
-      <i class="fa fa-github fa-fw"></i>
-      <span>Login with GitHub</span></a>
+            <a href="{{url_for('login', provider='github')}}"  class="btn btn-secondary">
+                <i class="fa fa-github fa-fw"></i>
+                <span>Login with GitHub</span>
+            </a>
+            
+            <a href="{{url_for('login', provider='twitter')}}"  class="btn btn-primary">
+                <i class="fa fa-twitter fa-fw"></i>
+                <span>Login with Twitter</span>
+            </a>
         {% endif %}
     </center>
 {% endblock content %}
