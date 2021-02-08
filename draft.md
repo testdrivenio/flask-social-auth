@@ -1,23 +1,4 @@
----
-title: Adding Social Authentication to Flask
-layout: blog
-share: true
-toc: true
-permalink: flask-social-auth
-type: blog
-author: Amal Shaji
-lastname: shaji
-contributors: herman
-description: This tutorial details how to add social auth to a Flask application.
-keywords: "flask social auth, flask auth, python social auth, flask oauth, flask allauth"
-topics: "flask"
-image: flask-social-auth/flask_social_auth.png
-blurb: Add social auth to a Flask app.
-related_posts: web-authentication-methods, flask-spa-auth, dockerizing-flask-with-postgres-gunicorn-and-nginx
-featured_course: tdd-flask
-date: 2021-02-10
-modified_date: 2021-02-10
----
+# Adding Social Authentication to Flask
 
 In this tutorial, we'll look at how to add social auth, with GitHub and Twitter, to a Flask application.
 
@@ -26,10 +7,6 @@ In this tutorial, we'll look at how to add social auth, with GitHub and Twitter,
 Using a social auth has its advantages. You won't need to set up auth for the web application, since it's handled by the third-party, [OAuth provider](https://en.wikipedia.org/wiki/List_of_OAuth_providers). Also, since providers like Google, Facebook, and GitHub perform extensive checks to prevent unauthorized access to their services, leveraging social auth instead of rolling your own auth mechanism can boost your application's security.
 
 Along with Flask, we'll use [Flask-Dance](https://flask-dance.readthedocs.io/en/latest/) to enable social auth,[Flask-Login](https://flask-login.readthedocs.io/) for logging users in and out and managing sessions, and [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/) for interacting with a database to store user-related data.
-
-<h2 class="toc-header">Contents</h2>
-
-[TOC]
 
 ### Why Use Social Authentication?
 
