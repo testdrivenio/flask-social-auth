@@ -106,22 +106,9 @@ print(f"You are {username} on GitHub")
 
 To test, save this code to a file called *oath.py*. Make sure to review the comments.
 
-TODO: can you provide instructions on how to obtain the client id and secret?
+Follow these steps to obtain new OAuth app ID and Secret from GitHub.
 
-Install the [requests](https://requests.readthedocs.io/en/master/) library. Then, run `python oauth.py`.
-
-![demo](images/terminal.gif)
-
-## Flask Extensions
-
-TODO: can you add a brief list of Flask-Extensions that deal with social auth. Mention that you can use OAuthLib as well.
-TODO: i'd also add a sentence or two around why you decided to go with Flask Dance.
-
-[Flask-Dance](https://flask-dance.readthedocs.io/en/latest/) is a library built on top of OAuthLib designed specifically for Flask. It has a simple API that lets you quickly add social login to a Flask app.
-
-## GitHub Provider
-
-First, we need to create an OAuth app and get the OAuth keys from GitHub. Log in to your GitHub account, and then navigate to [https://github.com/settings/applications/new](https://github.com/settings/applications/new) to create a new [OAuth application](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps):
+1. Log in to your GitHub account, and then navigate to [https://github.com/settings/applications/new](https://github.com/settings/applications/new) to create a new [OAuth application](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps):
 
 ![Register GitHub application](images/github_register.PNG)
 
@@ -131,9 +118,36 @@ Homepage URL: http://127.0.0.1:5000
 Callback URL: http://127.0.0.1:5000/login/github/authorized
 ```
 
+Once the app is created, you'll get ID and SECRET.
+
 ![GitHub ID and Secret](images/github_tokens.PNG)
 
-Copy the generated tokens and save them to a `.env` file
+Set the values to environment variables by running the following from a terminal.
+
+
+```bash
+export GITHUB_ID=<your-github-id>
+export GITHUB_SECRET=<your-github-secret>
+# for windows machine, use `set` instead of `export`
+```
+
+Install the [requests](https://requests.readthedocs.io/en/master/) library. Then, run `python oauth.py`.
+
+![demo](images/terminal.gif)
+
+## Flask Extensions
+
+- [OAuthLib](https://github.com/oauthlib/oauthlib)
+- [Requests-OAuthlib](https://github.com/requests/requests-oauthlib)
+- [Python Social Auth - Flask](https://github.com/python-social-auth/social-app-flask)
+- [Flask-Social](https://github.com/mattupstate/flask-social/)
+- [Flask-Social-Blueprint](https://github.com/wooyek/flask-social-blueprint)
+
+For this tutorial, we will be using [Flask-Dance](https://flask-dance.readthedocs.io/en/latest/). Flask-Dance is a library built on top of OAuthLib designed specifically for Flask. It has a simple API that lets you quickly add social login to a Flask app. It is also the most popular among OAuth libraries designed for Flask. 
+
+## GitHub Provider
+
+We have already seen how to generate GitHub ID and SECRET. Copy the generated tokens and save them to a `.env` file(flask will automatically load `.env` file).
 
 ```env
 GITHUB_ID=<YOUR_ID_HERE>
@@ -555,13 +569,24 @@ Once done, start the app and navigate to [http://127.0.0.1:5000](http://127.0.0.
 
 ## Twitter Login Flow
 
-TODO: I think we should make this a goal for the reader. Want to outline the high-level steps and then provide a link to the code for each one?
+The GitHub + Flask-Login should give you a fare idea on how the Twitter login should be setup. We follow the same steps as we did got GitHub.
 
+1. Create a new blueprint for Twitter(we have already seen this)
+1. Create a new endpoint for twitter login
+    - @app.route("/twitter")
+1. Create a new flask signal to login user when they authorize via twitter 
+    - @oauth_authorized.connect_via(twitter_blueprint)
+
+Once these steps are completed, your twitter login should be done. However, we have created an endpoint and a signal for each provider. This is not good when setting up more providers. Instead of repeating the code, we wire up GitHub and Twitter to use same endpoint and signal for login. You can read about the [endpoint](https://github.com/testdrivenio/flask-social-auth/blob/fa21a48d6554e7cdb70316987872b4b38e993bba/main.py#L27) and the [signal](https://github.com/testdrivenio/flask-social-auth/blob/fa21a48d6554e7cdb70316987872b4b38e993bba/app/oauth.py#L39) in the [repo](https://github.com/testdrivenio/flask-social-auth) for this tutorial. 
 ## Conclusion
 
 This tutorial detailed how to add social auth to a Flask app using Flask-Dance. After configuring both GitHub and Twitter, you should now have a solid understanding of how to wire up new social auth providers:
 
-TODO: add the steps
+1. Grab the tokens for each provider by creating OAuth applications.
+1. Setup database models to store user as well as oauth data.
+1. Create blueprints for each provider and add the created oauth model as storage.
+1. Add a route to authenticate with the provider.
+1. Add a signal to login the user when authenticated.
 
 Looking for additional challenges?
 
