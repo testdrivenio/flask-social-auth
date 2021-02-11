@@ -2,27 +2,30 @@
 
 In this tutorial, we'll look at how to add social auth, with GitHub and Twitter, to a Flask application.
 
-> Social login (also known as social login or social signon) is a process of authenticating a user based on a third-party service, without relying on your own authentication service. For example, the `Sign in with Google` button that you see on a website is the best example of social login. Here google authenticates the user and provides a token to the application for managing the user's session.
+> Social login (also known as social login or social signon) is a process of authenticating a user based on a third-party service, without relying on your own authentication service. For example, the `Sign in with Google` button that you see on a website is the best example of social login. Google authenticates the user and provides a token to the application for managing the user's session.
 
-Using a social auth has its advantages. You won't need to set up auth for the web application, since it's handled by the third-party, [OAuth provider](https://en.wikipedia.org/wiki/List_of_OAuth_providers). Also, since providers like Google, Facebook, and GitHub perform extensive checks to prevent unauthorized access to their services, leveraging social auth instead of rolling your own auth mechanism can boost your application's security.
+Using social auth has its advantages. You won't need to set up auth for the web application, since it's handled by the third-party, [OAuth provider](https://en.wikipedia.org/wiki/List_of_OAuth_providers). Also, since providers like Google, Facebook, and GitHub perform extensive checks to prevent unauthorized access to their services, leveraging social auth instead of rolling your own auth mechanism can boost your application's security.
 
-Along with Flask, we'll use [Flask-Dance](https://flask-dance.readthedocs.io/en/latest/) to enable social auth,[Flask-Login](https://flask-login.readthedocs.io/) for logging users in and out and managing sessions, and [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/) for interacting with a database to store user-related data.
+Along with Flask, we'll use [Flask-Dance](https://flask-dance.readthedocs.io/en/latest/) to enable social auth, [Flask-Login](https://flask-login.readthedocs.io/) for logging users in and out and managing sessions, and [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/) for interacting with a database to store user-related data.
 
-### Why Use Social Authentication?
+<h2 class="toc-header">Contents</h2>
+
+[TOC]
+
+## Why Use Social Authentication?
 
 Why would you want to leverage social auth over rolling your own auth?
 
 #### Pros
 
-- No need to spin up your own authentication workflow
-- Improved security. Third-party auth providers like Google, Facebook, etc., focus heavily on security. Using such services can improve the security of your own application.
-- You can automatically retrieve the username, email, and other data from the authentication provider. This improves the signup experience by eliminating this step (manually asking them).
+1. No need to spin up your own authentication workflow.
+1. Improved security. Third-party auth providers like Google, Facebook, etc., focus heavily on security. Using such services can improve the security of your own application.
+1. You can automatically retrieve the username, email, and other data from the authentication provider. This improves the signup experience by eliminating this step (manually asking them).
 
 #### Cons
 
-- Your application now depends on another application outside your control. If the third-party application goes down, users won't be able to sign up or log in.
-- People tend to ignore the permissions requested by an authentication provider. Some applications might even access data that's not required.
-- Social login cannot be the sole authentication method, as the users with no social account might need to create one to log in. The best approach is to provide both(social + your own) and let the user choose.
+1. Your application now depends on another application outside your control. If the third-party application goes down, users won't be able to sign up or log in.
+1. People tend to ignore the permissions requested by an authentication provider. Some applications might even access data that's not required.
 1. Users that don't have accounts on one of the providers that you have configured won't be able to access your application. The best approach is to implement both -- e.g., username and password and social auth -- and let the user choose.
 
 ## OAuth
@@ -35,11 +38,9 @@ The most common flow (or grant) is [authorization code](https://oauth.net/2/gran
 1. They are redirected to the auth provider for verification
 1. After verification, they are then redirected back to your app with an authorization code
 1. You then need to make a request, to the auth provider, with the authorization code for an access token
-1. After the provider verifies authorization code, they send back the access token
+1. After the provider verifies the authorization code, they send back the access token
 1. The user is then logged in so they can access the protected resources
 1. The access token can then be used to get data from the auth provider
-
-![flow](images/flow.png)
 
 > For more on OAuth, review [An Introduction to OAuth 2](https://www.digitalocean.com/community/tutorials/an-introduction-to-oauth-2).
 
@@ -106,11 +107,9 @@ print(f"You are {username} on GitHub")
 
 To test, save this code to a file called *oath.py*. Make sure to review the comments.
 
-Follow these steps to obtain new OAuth app ID and Secret from GitHub.
+Next, you need to create an OAuth app and get the OAuth keys from GitHub.
 
-1. Log in to your GitHub account, and then navigate to [https://github.com/settings/applications/new](https://github.com/settings/applications/new) to create a new [OAuth application](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps):
-
-![Register GitHub application](images/github_register.PNG)
+Log in to your GitHub account, and then navigate to [https://github.com/settings/applications/new](https://github.com/settings/applications/new) to create a new [OAuth application](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps):
 
 ```text
 Application name: Testing Flask-Dance
@@ -118,36 +117,107 @@ Homepage URL: http://127.0.0.1:5000
 Callback URL: http://127.0.0.1:5000/login/github/authorized
 ```
 
-Once the app is created, you'll get ID and SECRET.
+<img data-src="/static/images/blog/flask-social-auth/register_github_oauth_app.png"  loading="lazy" class="lazyload" style="max-width:100%;" alt="register github oauth app">
 
-![GitHub ID and Secret](images/github_tokens.PNG)
+Click "Register application". You'll be redirected to your app. Take note of the Client ID and Client Secret:
 
-Set the values to environment variables by running the following from a terminal.
+<img data-src="/static/images/blog/flask-social-auth/github_oauth_app.png"  loading="lazy" class="lazyload" style="max-width:100%;" alt="github oauth ap">
 
+> If a Client Secret wasn't generated, click "Generate a new client secret".
+
+Set the generated Client ID and Client Secret as environment variables:
 
 ```bash
-export GITHUB_ID=<your-github-id>
-export GITHUB_SECRET=<your-github-secret>
+$ export GITHUB_ID=<your-github-id>
+$ export GITHUB_SECRET=<your-github-secret>
 # for windows machine, use `set` instead of `export`
 ```
 
-Install the [requests](https://requests.readthedocs.io/en/master/) library. Then, run `python oauth.py`.
+Install the [requests](https://requests.readthedocs.io/en/master/) library, and then run the script:
 
-![demo](images/terminal.gif)
+```bash
+$ pip install requests
+$ python oauth.py
+```
 
-## Flask Extensions
+You should see:
 
-- [OAuthLib](https://github.com/oauthlib/oauthlib)
-- [Requests-OAuthlib](https://github.com/requests/requests-oauthlib)
-- [Python Social Auth - Flask](https://github.com/python-social-auth/social-app-flask)
-- [Flask-Social](https://github.com/mattupstate/flask-social/)
-- [Flask-Social-Blueprint](https://github.com/wooyek/flask-social-blueprint)
+```bash
+Authorization URL: https://github.com/login/oauth/authorize?response_type=code&client_id=cde067521efaefe0c927
+Enter the code:
+```
 
-For this tutorial, we will be using [Flask-Dance](https://flask-dance.readthedocs.io/en/latest/). Flask-Dance is a library built on top of OAuthLib designed specifically for Flask. It has a simple API that lets you quickly add social login to a Flask app. It is also the most popular among OAuth libraries designed for Flask. 
+Navigate to the URL. Authorize the app. Then, grab the code from the redirect URL. For example:
+
+```bash
+http://127.0.0.1:5000/login/github/authorized?code=5e54f2d755e450a64af3
+```
+
+Add the code back in the terminal window:
+
+```bash
+Authorization URL: https://github.com/login/oauth/authorize?response_type=code&client_id=cde067521efaefe0c927
+Enter the code: 5e54f2d755e450a64af3
+```
+
+You should see your GitHub username outputted like so:
+
+```bash
+You are mjhea0 on GitHub
+```
+
+With that, let's look at how to add social auth to a Flask app.
+
+## Flask-Dance
+
+[OAuthLib](https://github.com/oauthlib/oauthlib) is a popular, well-maintained Python library that implements OAuth. While you can use this library alone, for this tutorial, we'll be using [Flask-Dance](https://flask-dance.readthedocs.io/en/latest/). Flask-Dance is a library built on top of OAuthLib designed specifically for Flask. It has a simple API that lets you quickly add social login to a Flask app. It's also the most popular among the OAuth libraries designed for Flask.
+
+Go ahead and create a new Flask app, create and activate a virtual environment, and install the required dependencies:
+
+```bash
+$ mkdir flask-social-auth && cd flask-social-auth
+$ python3.9 -m venv .venv
+$ source .venv/bin/activate
+(.venv)$ pip install Flask==1.1.2 Flask-Dance==3.2.0 python-dotenv==0.15.0
+```
+
+Next, create a *main.py* file:
+
+```python
+# main.py
+
+from flask import Flask, jsonify
+
+
+app = Flask(__name__)
+
+
+@app.route("/ping")
+def ping():
+    return jsonify(ping="pong")
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+Run the server:
+
+```bash
+(.venv)$ python main.py
+```
+
+Navigate to [http://127.0.0.1:5000/ping](http://127.0.0.1:5000/ping). You should see:
+
+```json
+{
+  "ping": "pong"
+}
+```
 
 ## GitHub Provider
 
-We have already seen how to generate GitHub ID and SECRET. Copy the generated tokens and save them to a `.env` file(flask will automatically load `.env` file).
+Go ahead and save the GitHub Client ID and Client Secret that you created earlier to a new *.env* file:
 
 ```env
 GITHUB_ID=<YOUR_ID_HERE>
@@ -156,13 +226,9 @@ GITHUB_SECRET=<YOUR_SECRET_HERE>
 OAUTHLIB_INSECURE_TRANSPORT=1
 ```
 
+> Since we installed [python-dotenv](https://github.com/theskumar/python-dotenv), Flask will [automatically](https://flask.palletsprojects.com/en/1.1.x/cli/#environment-variables-from-dotenv) set environment variables from the *.env* file when you run the app.
+
 `OAUTHLIB_INSECURE_TRANSPORT=1` is required for testing purposes as OAuthLib defaults to requiring HTTPS.
-
-Install the required dependencies:
-
-```bash
-pip install flask Flask==1.1.2 Flask-Dance==3.2.0 python-dotenv==0.15.0
-```
 
 Flask-Dance provides Flask [blueprints](https://flask-dance.readthedocs.io/en/latest/concepts.html#blueprints) for each provider. Let's create one for the GitHub provider in *app/oauth.py*:
 
@@ -170,7 +236,9 @@ Flask-Dance provides Flask [blueprints](https://flask-dance.readthedocs.io/en/la
 # app/oauth.py
 
 import os
+
 from flask_dance.contrib.github import make_github_blueprint
+
 
 github_blueprint = make_github_blueprint(
     client_id=os.getenv("GITHUB_ID"),
@@ -178,22 +246,28 @@ github_blueprint = make_github_blueprint(
 )
 ```
 
-Now let's create a new Flask app and add the GitHub blueprint to it:
+Import and register the blueprint in *main.py* and wire up a new route:
 
 ```python
 # main.py
 
-from flask import Flask, redirect, url_for
+from flask import Flask, jsonify, redirect, url_for
 from flask_dance.contrib.github import github
 
 from app.oauth import github_blueprint
+
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 app.register_blueprint(github_blueprint, url_prefix="/login")
 
 
-@app.route("/")
+@app.route("/ping")
+def ping():
+    return jsonify(ping="pong")
+
+
+@app.route("/github")
 def login():
     if not github.authorized:
         return redirect(url_for("github.login"))
@@ -206,123 +280,27 @@ if __name__ == "__main__":
     app.run(debug=True)
 ```
 
-The route `/` redirects to the `github authentication` page, if the user is not already logged in. Once logged in, it displays the username.
+The `/github` route redirects to GitHub for verification, if the user is not already logged in. Once logged in, it displays the username.
 
-Start the application by running `python main.py`, navigate to [http://127.0.0.1:5000](http://127.0.0.1:5000) and test the app:
+Start the application by running `python main.py`, navigate to [http://127.0.0.1:5000/github](http://127.0.0.1:5000/github), and test the app. After verifying on GitHub, you will be redirected back. You should see something similar to:
 
-![Demo 1](images/github-flask-dance.gif)
-
-## Twitter Provider
-
-Setting up the Twitter provider is similar to GitHub:
-
-1. Create an OAuth app on Twitter
-1. Configure the Twitter blueprint
-1. Set up a route to redirect to Twitter login
-
-Start by [applying](https://developer.twitter.com/en/portal/dashboard) for a Twitter developer account (if you don't already have one). Once created, navigate to [Projects and Apps](https://developer.twitter.com/en/portal/projects-and-apps) and click "Create App".
-
-Give the app a name, and take note of the API key and API secret key. Then, under "Authentication Settings". Enable "Enable 3-legged OAuth" and "Request email address from users". Add the Callback, Website, Terms of service, and Privacy policy URLs as well:
-
-```text
-Callback URL: http://127.0.0.1:5000/login/twitter/authorized
-Website URL: http://example.com
-Terms of service: http://example.com
-Privacy policy: http://example.com
+```
+You are @mjhea0 on GitHub
 ```
 
-![twitter settings](images/twitter_settigs.PNG)
-
-![twitter callback](images/twitter_callback.PNG)
-
-Add the tokens to our `.env` file.
-
-![twitter tokens](images/twitter_tokens.PNG)
-
-```env
-TWITTER_API_KEY=<your-twitter-api-key>
-TWITTER_API_SECRET=<your-twitter-api-secret>
-```
-
-Now create a Twitter blueprint in *oauth.py*:
-
-```python
-from flask_dance.contrib.twitter import make_twitter_blueprint
-
-twitter_blueprint = make_twitter_blueprint(
-    api_key=os.getenv("TWITTER_API_KEY"),
-    api_secret=os.getenv("TWITTER_API_SECRET"),
-)
-```
-
-Remember: Currently we're creating a Twitter app independent of the GitHub application. We'll see how to add both Twitter and GitHub login and use Flask-Login to manage users in later sections.
-
-Now we set up the route to authenticate via twitter:
-
-```python
-# main.py
-
-from flask import Flask, redirect, url_for
-from flask_dance.contrib.twitter import twitter
-
-from app.oauth import twitter_blueprint
-
-app = Flask(__name__)
-app.secret_key = "supersecretkey"
-app.register_blueprint(twitter_blueprint, url_prefix="/login")
-
-
-@app.route("/")
-def login():
-    if not twitter.authorized:
-        return redirect(url_for("twitter.login"))
-    res = twitter.get("account/settings.json")
-
-    return f"You are @{res.json()['screen_name']} on Twitter"
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
-```
-
-This works the same as the GitHub authentication: It checks if the user has already authenticated. If not, it redirects the user to the Twitter auth page. The only differences between GitHub and Twitter authentication are the endpoint to fetch user data and the key to get the username from the fetched data:
-
-|                             | GitHub | Twitter                |
-|-----------------------------|--------|------------------------|
-| Endpoint to fetch user data | /user  | /account/settings.json |
-| Key for username            | login  | screen_name            |
-
-We've now finished setting up social authentication with GitHub and Twitter.
-
-## Login Flow
+## User Management
 
 Next, let's wire up [Flask-Login](https://flask-login.readthedocs.io/) for managing user sessions along with [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/) for storing user-related data.
 
-### Setup
-
-Project Structure:
+Install the dependencies:
 
 ```bash
-├── app
-│   ├── __init__.py
-│   ├── config.py
-│   ├── models.py
-│   └── oauth.py
-├── main.py
-├── requirements.txt
-├── templates
-│   ├── _base.html
-│   └── index.html
-└── users.db
+(.venv)$ pip install Flask-Login==0.5.0 Flask-SQLAlchemy==2.4.4 SQLAlchemy-Utils==0.36.8
 ```
 
-Start by installing the required dependencies:
+### Models
 
-```bash
-pip install Flask-Login==0.5.0 Flask-SQLAlchemy==2.4.4
-```
-
-Create the models to store user and OAuth info:
+Create the models to store user and OAuth info in a new file called *app/models.py*:
 
 ```python
 # app/models.py
@@ -330,6 +308,7 @@ Create the models to store user and OAuth info:
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager
 from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
+
 
 db = SQLAlchemy()
 
@@ -352,6 +331,11 @@ def load_user(user_id):
     return User.query.get(user_id)
 ```
 
+Notes:
+
+1. The [OAuthConsumerMixin](https://flask-dance.readthedocs.io/en/v1.2.0/backends.html#sqlalchemy) from Flask-Dance will automatically add the necessary fields to store OAuth information.
+1. The [LoginManager](https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager) from Flask-Login will fetch users from the `user` table.
+
 This will create two tables, `user` and `flask_dance_oauth`:
 
 ```bash
@@ -373,23 +357,23 @@ token       TEXT
 user_id     INTEGER
 ```
 
-> `OAuthConsumerMixin` will automatically add the necessary fields to store OAuth information. The login manager will fetch users from the `user` table.
-
-TODO:
+TODO: if they wanted to changed the `SQLALCHEMY_DATABASE_URI` - since it's not defined it's currently in memory - where would they do that? (app config)
 
 ### GitHub Blueprint
 
-Now we modify the GitHub blueprint created earlier to add the `OAuth` table as storage:
+Next, modify the GitHub blueprint created earlier to add the `OAuth` table as storage:
 
 ```python
 # app/oauth.py
 
 import os
+
 from flask_login import current_user
 from flask_dance.contrib.github import make_github_blueprint
 from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
 
 from app.models import OAuth, db
+
 
 github_blueprint = make_github_blueprint(
     client_id=os.getenv("GITHUB_ID"),
@@ -411,29 +395,34 @@ Here, we passed in:
 
 ### Endpoints
 
-Next, let's define the appropriate endpoints -- `login`, `logout`, and `homepage`:
+Next, let's define the appropriate endpoints in *main.py* -- `login`, `logout`, and `homepage`:
 
 ```python
 # main.py
 
-from flask import Flask, redirect, url_for, render_template
-
+from flask import Flask, jsonify, redirect, render_template, url_for
+from flask_dance.contrib.github import github
 from flask_login import logout_user, login_required
 
 from app.models import db, login_manager
 from app.oauth import github_blueprint
 
-...
 
 app = Flask(__name__)
-
-...
+app.secret_key = "supersecretkey"
+app.register_blueprint(github_blueprint, url_prefix="/login")
 
 db.init_app(app)
 login_manager.init_app(app)
 
 with app.app_context():
     db.create_all()
+
+
+@app.route("/ping")
+def ping():
+    return jsonify(ping="pong")
+
 
 @app.route("/")
 def homepage():
@@ -448,11 +437,16 @@ def login():
     username = res.json()["login"]
     return f"You are @{username} on GitHub"
 
+
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("homepage"))
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
 ```
 
 Here, we initialized the `db` and `login_manager` defined earlier in *models.py*.
@@ -467,8 +461,8 @@ Signals allow you to perform actions when certain predefined events occur. In ou
 
 Signals requires [Binker](https://pypi.org/project/blinker/) to work, so go ahead and install it now:
 
-```sh
-$ pip install blinker==1.4
+```bash
+(.venv)$ pip install blinker==1.4
 ```
 
 Add a new helper to *app/oauth.py*:
@@ -476,8 +470,27 @@ Add a new helper to *app/oauth.py*:
 ```python
 # app/oauth.py
 
+import os
+
+from flask_login import current_user, login_user
 from flask_dance.consumer import oauth_authorized
+from flask_dance.contrib.github import github, make_github_blueprint
+from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
 from sqlalchemy.orm.exc import NoResultFound
+
+from app.models import db, OAuth, User
+
+
+github_blueprint = make_github_blueprint(
+    client_id=os.getenv("GITHUB_ID"),
+    client_secret=os.getenv("GITHUB_SECRET"),
+    storage=SQLAlchemyStorage(
+        OAuth,
+        db.session,
+        user=current_user,
+        user_required=False,
+    ),
+)
 
 
 @oauth_authorized.connect_via(github_blueprint)
@@ -497,22 +510,22 @@ def github_logged_in(blueprint, token):
         login_user(user)
 ```
 
-When the user connects via the `github_blueprint`, the `github_logged_in` function gets executed. It takes in two parameters: the blueprint and the token (from GitHub). We grabbed the username from the provider and performed one of two actions:
+When the user connects via the `github_blueprint`, the `github_logged_in` function gets executed. It takes in two parameters: the blueprint and the token (from GitHub). We then grabbed the username from the provider and performed one of two actions:
 
 1. If the username is already present in the tables, we log the user in
 1. If not, we create a new user and then log the user in
 
-## Templates
+### Templates
 
 Finally, let's add the templates:
 
 ```bash
-mkdir templates && cd templates
-touch _base.html
-touch index.html
+(.venv)$ mkdir templates && cd templates
+(.venv)$ touch _base.html
+(.venv)$ touch index.html
 ```
 
-The *_base.html* templates contains the general layout:
+The *_base.html* template contains the general layout:
 
 ```html
 <!-- templates/_base.html -->
@@ -567,23 +580,41 @@ Once done, start the app and navigate to [http://127.0.0.1:5000](http://127.0.0.
 
 ![demo 2](images/github-login.gif)
 
-## Twitter Login Flow
+Final project structure:
 
-The GitHub + Flask-Login should give you a fare idea on how the Twitter login should be setup. We follow the same steps as we did got GitHub.
+```bash
+├── .env
+├── app
+│   ├── __init__.py
+│   ├── models.py
+│   └── oauth.py
+├── main.py
+└── templates
+    ├── _base.html
+    └── index.html
+```
 
-1. Create a new blueprint for Twitter(we have already seen this)
-1. Create a new endpoint for twitter login
-    - @app.route("/twitter")
-1. Create a new flask signal to login user when they authorize via twitter 
-    - @oauth_authorized.connect_via(twitter_blueprint)
+## Twitter Provider
 
-Once these steps are completed, your twitter login should be done. However, we have created an endpoint and a signal for each provider. This is not good when setting up more providers. Instead of repeating the code, we wire up GitHub and Twitter to use same endpoint and signal for login. You can read about the [endpoint](https://github.com/testdrivenio/flask-social-auth/blob/fa21a48d6554e7cdb70316987872b4b38e993bba/main.py#L27) and the [signal](https://github.com/testdrivenio/flask-social-auth/blob/fa21a48d6554e7cdb70316987872b4b38e993bba/app/oauth.py#L39) in the [repo](https://github.com/testdrivenio/flask-social-auth) for this tutorial. 
+Now that you know the steps for wiring up a new OAuth provider along with configuring Flask-Login, you should be able to set up a new provider fairly easily.
+
+For example, here are the steps for Twitter:
+
+1. Create an OAuth app on Twitter
+1. Configure the Twitter blueprint
+1. Set up a route to redirect to Twitter login
+1. Create a new blueprint for Twitter
+1. Create a new endpoint for Twitter login (`@app.route("/twitter")`)
+1. Create a new flask signal to login user when they authorize via twitter (`@oauth_authorized.connect_via(twitter_blueprint)`)
+
+Try this on your own.
+
 ## Conclusion
 
 This tutorial detailed how to add social auth to a Flask app using Flask-Dance. After configuring both GitHub and Twitter, you should now have a solid understanding of how to wire up new social auth providers:
 
-1. Grab the tokens for each provider by creating OAuth applications.
-1. Setup database models to store user as well as oauth data.
+1. Grab the tokens for each provider by creating OAuth applications
+1. Set up database models to store the user as well as the OAuth data
 1. Create blueprints for each provider and add the created oauth model as storage.
 1. Add a route to authenticate with the provider.
 1. Add a signal to login the user when authenticated.
