@@ -357,7 +357,16 @@ token       TEXT
 user_id     INTEGER
 ```
 
-TODO: if they wanted to changed the `SQLALCHEMY_DATABASE_URI` - since it's not defined it's currently in memory - where would they do that? (app config)
+Currently the database is in-memory by default. Change it to `sqlite` by updating the app config in `main.py`
+
+```python
+# main.py
+
+...
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./users.db"
+...
+```
 
 ### GitHub Blueprint
 
