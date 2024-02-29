@@ -1,7 +1,7 @@
-blinker==1.5
-Flask==2.2.2
-Flask-Dance==6.2.0
-Flask-Login==0.6.2
-Flask-SQLAlchemy==3.0.2
-python-dotenv==0.21.0
-SQLAlchemy-Utils==0.38.3
+blinker==1.7.0
+Flask==3.0.2
+Flask-Dance==7.0.1
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+python-dotenv==1.0.1
+SQLAlchemy-Utils==0.41.1

@@ -11,7 +11,7 @@ Check out the [post](https://testdriven.io/blog/flask-social-auth/).
 1. Create and activate a virtual environment:
 
     ```sh
-    $ python3 -m venv venv && source venv/bin/activate
+    $ python3.12 -m venv venv && source venv/bin/activate
     ```
 
 1. Install the requirements:
