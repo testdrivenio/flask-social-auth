@@ -6,7 +6,7 @@ from flask_login import current_user, login_user
 from flask_dance.consumer import oauth_authorized
 from flask_dance.contrib.github import github, make_github_blueprint
 from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
-from flask_dance.contrib.twitter import twitter, make_twitter_blueprint
+from flask_dance.contrib.google import google, make_google_blueprint
 from sqlalchemy.orm.exc import NoResultFound
 
 from app.models import db, OAuth, User
@@ -23,9 +23,10 @@ github_blueprint = make_github_blueprint(
     ),
 )
 
-twitter_blueprint = make_twitter_blueprint(
-    api_key=os.getenv("TWITTER_ID"),
-    api_secret=os.getenv("TWITTER_SECRET"),
+google_blueprint = make_google_blueprint(
+    client_id=os.getenv("GOOGLE_ID"),
+    client_secret=os.getenv("GOOGLE_SECRET"),
+    scope=["profile", "email"],
     storage=SQLAlchemyStorage(
         OAuth,
         db.session,
@@ -52,13 +53,12 @@ def github_logged_in(blueprint, token):
         login_user(user)
 
 
-@oauth_authorized.connect_via(twitter_blueprint)
-def twitter_logged_in(blueprint, token):
-    info = twitter.get("account/settings.json")
+@oauth_authorized.connect_via(google_blueprint)
+def google_logged_in(blueprint, token):
+    info = google.get("/oauth2/v2/userinfo")
     if info.ok:
         account_info = info.json()
-        username = account_info["screen_name"]
-
+        username = account_info["email"]
         query = User.query.filter_by(username=username)
         try:
             user = query.one()

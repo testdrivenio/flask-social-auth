@@ -2,18 +2,19 @@
 
 from flask import Flask, jsonify, redirect, render_template, url_for
 from flask_dance.contrib.github import github
-from flask_dance.contrib.twitter import twitter
+from flask_dance.contrib.google import google
 from flask_login import logout_user, login_required
+from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
 
 from app.models import db, login_manager
-from app.oauth import github_blueprint, twitter_blueprint
+from app.oauth import github_blueprint, google_blueprint
 
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./users.db"
 app.secret_key = "supersecretkey"
 app.register_blueprint(github_blueprint, url_prefix="/login")
-app.register_blueprint(twitter_blueprint, url_prefix="/login")
+app.register_blueprint(google_blueprint, url_prefix="/login")
 
 db.init_app(app)
 login_manager.init_app(app)
@@ -41,14 +42,16 @@ def login_github():
     return f"You are @{username} on GitHub"
 
 
-@app.route("/twitter")
-def login_twitter():
-    if not twitter.authorized:
-        return redirect(url_for("twitter.login"))
-    res = twitter.get("account/settings.json")
-    username = res.json()["screen_name"]
-    return f"You are @{username} on Twitter"
-
+@app.route("/google")
+def login_google():
+    try:
+        if not google.authorized:
+            return redirect(url_for("google.login"))
+        res = google.get("/oauth2/v2/userinfo")
+        username = res.json()["email"]
+        return f"You are @{username} on Google"
+    except TokenExpiredError as e:
+        return redirect(url_for("google.login"))
 
 @app.route("/logout")
 @login_required
